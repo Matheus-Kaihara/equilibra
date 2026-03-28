@@ -3,16 +3,32 @@ import { TrendingDown, TrendingUp, Wallet, CreditCard } from "lucide-react";
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Transaction } from "../types";
+import { fetchTransactions } from "../lib/transactions";
+import { toast } from "sonner";
 
 export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const stored = localStorage.getItem("transactions");
-    if (stored) {
-      setTransactions(JSON.parse(stored));
-    }
+    void loadTransactions();
   }, []);
+
+  const loadTransactions = async () => {
+    setLoading(true);
+
+    const { data, error } = await fetchTransactions();
+
+    if (error) {
+      toast.error(`Erro ao carregar transações: ${error.message}`);
+      setLoading(false);
+      return;
+    }
+
+    setTransactions(data ?? []);
+    setLoading(false);
+  };
 
   // Calcular métricas
   const totalIncome = transactions
@@ -107,6 +123,12 @@ export function Dashboard() {
         </p>
       </div>
 
+      {loading ? (
+        <div className="bg-card p-10 rounded-xl border border-border text-center text-muted-foreground">
+          Carregando métricas...
+        </div>
+      ) : (
+        <>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
@@ -299,6 +321,8 @@ export function Dashboard() {
           </div>
         )}
       </motion.div>
+        </>
+      )}
     </div>
   );
 }

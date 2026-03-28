@@ -1,32 +1,47 @@
 import { useState, useEffect } from "react";
 import { Trash2, TrendingUp, TrendingDown, Filter } from "lucide-react";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 import { Transaction } from "../types";
+import { fetchTransactions, removeTransaction } from "../lib/transactions";
 
 export function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadTransactions();
+    void loadTransactions();
   }, []);
 
-  const loadTransactions = () => {
-    const stored = localStorage.getItem("transactions");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Ordenar por data (mais recente primeiro)
-      parsed.sort((a: Transaction, b: Transaction) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      setTransactions(parsed);
+  const loadTransactions = async () => {
+    setLoading(true);
+
+    const { data, error } = await fetchTransactions();
+
+    if (error) {
+      toast.error(`Erro ao carregar transações: ${error.message}`);
+      setLoading(false);
+      return;
     }
+
+    setTransactions(data ?? []);
+    setLoading(false);
   };
 
-  const deleteTransaction = (id: string) => {
-    const updated = transactions.filter((t) => t.id !== id);
-    localStorage.setItem("transactions", JSON.stringify(updated));
-    setTransactions(updated);
+  const deleteTransaction = async (id: string) => {
+    const previousTransactions = transactions;
+    setTransactions((current) => current.filter((t) => t.id !== id));
+
+    const { error } = await removeTransaction(id);
+
+    if (error) {
+      setTransactions(previousTransactions);
+      toast.error(`Erro ao excluir transação: ${error.message}`);
+      return;
+    }
+
+    toast.success("Transação excluída com sucesso!");
   };
 
   const filteredTransactions = transactions.filter((t) => {
@@ -82,7 +97,11 @@ export function Transactions() {
 
       {/* Transactions List */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-        {filteredTransactions.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <p className="text-lg">Carregando transações...</p>
+          </div>
+        ) : filteredTransactions.length > 0 ? (
           <div className="divide-y divide-border">
             {filteredTransactions.map((transaction, index) => (
               <motion.div
@@ -136,7 +155,9 @@ export function Transactions() {
                     })}
                   </p>
                   <button
-                    onClick={() => deleteTransaction(transaction.id)}
+                    onClick={() => {
+                      void deleteTransaction(transaction.id);
+                    }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-500/20 rounded-lg text-red-500"
                   >
                     <Trash2 className="w-5 h-5" />
