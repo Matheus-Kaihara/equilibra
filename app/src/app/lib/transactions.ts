@@ -11,6 +11,26 @@ interface TransactionInsertInput {
 
 const TRANSACTIONS_TABLE = "transactions";
 
+type DatabaseErrorLike = {
+  message?: string;
+  code?: string;
+};
+
+export function getTransactionsErrorMessage(error: DatabaseErrorLike | null) {
+  if (!error) return "Erro desconhecido";
+
+  const message = error.message ?? "";
+
+  if (
+    error.code === "PGRST205" ||
+    message.includes("Could not find the table 'public.transactions'")
+  ) {
+    return "A tabela de transações ainda não existe no Supabase deste ambiente. Execute a migration `202603280001_create_transactions_table.sql` no SQL Editor.";
+  }
+
+  return message || "Erro ao acessar transações";
+}
+
 export async function fetchTransactions() {
   return supabase
     .from(TRANSACTIONS_TABLE)

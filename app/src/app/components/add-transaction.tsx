@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
-import { insertTransaction } from "../lib/transactions";
+import { getTransactionsErrorMessage, insertTransaction } from "../lib/transactions";
 
 const CATEGORIES = {
   expense: [
@@ -59,7 +59,7 @@ export function AddTransaction() {
     setSubmitting(false);
 
     if (error) {
-      toast.error(`Erro ao salvar transação: ${error.message}`);
+      toast.error(`Erro ao salvar transação: ${getTransactionsErrorMessage(error)}`);
       return;
     }
 

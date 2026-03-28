@@ -3,7 +3,7 @@ import { Trash2, TrendingUp, TrendingDown, Filter } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Transaction } from "../types";
-import { fetchTransactions, removeTransaction } from "../lib/transactions";
+import { fetchTransactions, getTransactionsErrorMessage, removeTransaction } from "../lib/transactions";
 
 export function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -20,7 +20,7 @@ export function Transactions() {
     const { data, error } = await fetchTransactions();
 
     if (error) {
-      toast.error(`Erro ao carregar transações: ${error.message}`);
+      toast.error(`Erro ao carregar transações: ${getTransactionsErrorMessage(error)}`);
       setLoading(false);
       return;
     }
@@ -37,7 +37,7 @@ export function Transactions() {
 
     if (error) {
       setTransactions(previousTransactions);
-      toast.error(`Erro ao excluir transação: ${error.message}`);
+      toast.error(`Erro ao excluir transação: ${getTransactionsErrorMessage(error)}`);
       return;
     }
 
