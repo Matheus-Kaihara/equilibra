@@ -107,9 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: data.error || "Erro ao criar conta" };
       }
 
-      // Fazer login após criar conta
-      const signInResult = await signIn(email, password);
-      return signInResult;
+      return { success: true };
     } catch (error: any) {
       console.error("Erro no signup:", error);
       return { success: false, error: error.message || "Erro ao criar conta" };

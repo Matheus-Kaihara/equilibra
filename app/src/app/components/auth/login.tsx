@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Lock, Mail, Shield } from "lucide-react";
-import { Toaster, toast } from "sonner";
-import { AuthProvider, useAuth } from "../../contexts/auth-context";
+import { toast } from "sonner";
+import { useAuth } from "../../contexts/auth-context";
 
 function LoginForm() {
   const { signIn, challengeMFA } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,6 +23,7 @@ function LoginForm() {
 
       if (result.success) {
         toast.success("Login realizado com sucesso!");
+        navigate("/");
       } else if (result.requiresMFA) {
         setShowMFA(true);
         toast.info("Digite o código de autenticação");
@@ -44,6 +46,7 @@ function LoginForm() {
 
       if (result.success) {
         toast.success("Autenticação completa!");
+        navigate("/");
       } else {
         toast.error(result.error || "Código inválido");
       }
@@ -202,10 +205,5 @@ function LoginForm() {
 }
 
 export function Login() {
-  return (
-    <AuthProvider>
-      <LoginForm />
-      <Toaster position="top-right" theme="dark" />
-    </AuthProvider>
-  );
+  return <LoginForm />;
 }

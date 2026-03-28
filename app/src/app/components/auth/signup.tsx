@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Lock, Mail, User } from "lucide-react";
-import { Toaster, toast } from "sonner";
-import { AuthProvider, useAuth } from "../../contexts/auth-context";
+import { toast } from "sonner";
+import { useAuth } from "../../contexts/auth-context";
 
 function SignupForm() {
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +34,7 @@ function SignupForm() {
 
       if (result.success) {
         toast.success("Conta criada com sucesso!");
+        navigate("/login");
       } else {
         toast.error(result.error || "Erro ao criar conta");
       }
@@ -167,10 +169,5 @@ function SignupForm() {
 }
 
 export function Signup() {
-  return (
-    <AuthProvider>
-      <SignupForm />
-      <Toaster position="top-right" theme="dark" />
-    </AuthProvider>
-  );
+  return <SignupForm />;
 }
