@@ -1,6 +1,5 @@
 import { Navigate, Outlet } from "react-router";
-import { Toaster } from "sonner";
-import { AuthProvider, useAuth } from "../contexts/auth-context";
+import { useAuth } from "../contexts/auth-context";
 
 function ProtectedContent() {
   const { user, loading } = useAuth();
@@ -24,10 +23,5 @@ function ProtectedContent() {
 }
 
 export function ProtectedRoute() {
-  return (
-    <AuthProvider>
-      <ProtectedContent />
-      <Toaster position="top-right" theme="dark" />
-    </AuthProvider>
-  );
+  return <ProtectedContent />;
 }
