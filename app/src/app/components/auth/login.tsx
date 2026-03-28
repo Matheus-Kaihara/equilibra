@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Lock, Mail, Shield } from "lucide-react";
-import { Toaster, toast } from "sonner";
-import { AuthProvider, useAuth } from "../../contexts/auth-context";
+import { toast } from "sonner";
+import { useAuth } from "../../contexts/auth-context";
 
 function LoginForm() {
   const { signIn, challengeMFA } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,6 +23,7 @@ function LoginForm() {
 
       if (result.success) {
         toast.success("Login realizado com sucesso!");
+        navigate("/");
       } else if (result.requiresMFA) {
         setShowMFA(true);
         toast.info("Digite o código de autenticação");
@@ -44,6 +46,7 @@ function LoginForm() {
 
       if (result.success) {
         toast.success("Autenticação completa!");
+        navigate("/");
       } else {
         toast.error(result.error || "Código inválido");
       }
@@ -126,7 +129,7 @@ function LoginForm() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
               <Lock className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl mb-2">Bem-vindo ao Equilibra</h1>
+            <h1 className="text-3xl mb-2 text-white">Bem-vindo ao Equilibra</h1>
             <p className="text-muted-foreground">
               Entre para gerenciar suas finanças
             </p>
@@ -134,7 +137,7 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block mb-2 text-sm">
+              <label htmlFor="email" className="block mb-2 text-sm text-white">
                 E-mail
               </label>
               <div className="relative">
@@ -145,14 +148,14 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="w-full pl-11 pr-4 py-3 bg-accent rounded-lg border border-border focus:border-violet-500 focus:outline-none transition-colors"
+                  className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block mb-2 text-sm">
+              <label htmlFor="password" className="block mb-2 text-sm text-white">
                 Senha
               </label>
               <div className="relative">
@@ -163,7 +166,7 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-3 bg-accent rounded-lg border border-border focus:border-violet-500 focus:outline-none transition-colors"
+                  className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -202,10 +205,5 @@ function LoginForm() {
 }
 
 export function Login() {
-  return (
-    <AuthProvider>
-      <LoginForm />
-      <Toaster position="top-right" theme="dark" />
-    </AuthProvider>
-  );
+  return <LoginForm />;
 }
