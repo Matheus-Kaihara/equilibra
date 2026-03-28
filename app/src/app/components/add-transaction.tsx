@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { insertTransaction } from "../lib/transactions";
 
 const CATEGORIES = {
   expense: [
@@ -28,6 +29,7 @@ const CATEGORIES = {
 
 export function AddTransaction() {
   const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
@@ -36,7 +38,7 @@ export function AddTransaction() {
     date: new Date().toISOString().split("T")[0],
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.description || !formData.amount || !formData.category) {
@@ -44,19 +46,22 @@ export function AddTransaction() {
       return;
     }
 
-    const transaction = {
-      id: Date.now().toString(),
+    setSubmitting(true);
+
+    const { error } = await insertTransaction({
       description: formData.description,
       amount: parseFloat(formData.amount),
       category: formData.category,
       type: formData.type,
       date: formData.date,
-    };
+    });
 
-    const stored = localStorage.getItem("transactions");
-    const transactions = stored ? JSON.parse(stored) : [];
-    transactions.push(transaction);
-    localStorage.setItem("transactions", JSON.stringify(transactions));
+    setSubmitting(false);
+
+    if (error) {
+      toast.error(`Erro ao salvar transação: ${error.message}`);
+      return;
+    }
 
     toast.success("Transação adicionada com sucesso!");
     navigate("/");
@@ -223,10 +228,11 @@ export function AddTransaction() {
             type="submit"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:from-violet-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2"
+            disabled={submitting}
+            className="w-full py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:from-violet-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5" />
-            Salvar Transação
+            {submitting ? "Salvando..." : "Salvar Transação"}
           </motion.button>
         </form>
       </motion.div>
