@@ -75,9 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: error.message };
       }
 
-      if (data.user) {
-        setUser(data.user as User);
+      if (data.session?.user) {
+        setUser(data.session.user as User);
         return { success: true };
+      }
+
+      if (data.user && !data.session) {
+        return {
+          success: false,
+          error: "Conta sem sessão ativa. Verifique o e-mail de confirmação ou tente novamente.",
+        };
       }
 
       return { success: false, error: "Erro ao fazer login" };
