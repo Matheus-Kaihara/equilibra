@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createHashRouter } from "react-router";
 import { Layout } from "./components/layout";
 import { Dashboard } from "./components/dashboard";
 import { Transactions } from "./components/transactions";
@@ -8,7 +8,7 @@ import { Signup } from "./components/auth/signup";
 import { MFASetup } from "./components/auth/mfa-setup";
 import { ProtectedRoute } from "./components/protected-route";
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: "/login",
     Component: Login,
