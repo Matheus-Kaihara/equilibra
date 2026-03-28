@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Lock, Mail, User } from "lucide-react";
-import { Toaster, toast } from "sonner";
-import { AuthProvider, useAuth } from "../../contexts/auth-context";
+import { toast } from "sonner";
+import { useAuth } from "../../contexts/auth-context";
 
 function SignupForm() {
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +34,7 @@ function SignupForm() {
 
       if (result.success) {
         toast.success("Conta criada com sucesso!");
+        navigate("/login");
       } else {
         toast.error(result.error || "Erro ao criar conta");
       }
@@ -55,7 +57,7 @@ function SignupForm() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
               <User className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl mb-2">Crie sua conta</h1>
+            <h1 className="text-3xl mb-2 text-white">Crie sua conta</h1>
             <p className="text-muted-foreground">
               Comece a organizar suas finanças hoje
             </p>
@@ -63,7 +65,7 @@ function SignupForm() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="name" className="block mb-2 text-sm">
+              <label htmlFor="name" className="block mb-2 text-sm text-white">
                 Nome completo
               </label>
               <div className="relative">
@@ -74,14 +76,14 @@ function SignupForm() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full pl-11 pr-4 py-3 bg-accent rounded-lg border border-border focus:border-violet-500 focus:outline-none transition-colors"
+                  className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block mb-2 text-sm">
+              <label htmlFor="email" className="block mb-2 text-sm text-white">
                 E-mail
               </label>
               <div className="relative">
@@ -92,14 +94,14 @@ function SignupForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="w-full pl-11 pr-4 py-3 bg-accent rounded-lg border border-border focus:border-violet-500 focus:outline-none transition-colors"
+                  className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block mb-2 text-sm">
+              <label htmlFor="password" className="block mb-2 text-sm text-white">
                 Senha
               </label>
               <div className="relative">
@@ -110,14 +112,14 @@ function SignupForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-3 bg-accent rounded-lg border border-border focus:border-violet-500 focus:outline-none transition-colors"
+                  className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block mb-2 text-sm">
+              <label htmlFor="confirmPassword" className="block mb-2 text-sm text-white">
                 Confirmar senha
               </label>
               <div className="relative">
@@ -128,7 +130,7 @@ function SignupForm() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-3 bg-accent rounded-lg border border-border focus:border-violet-500 focus:outline-none transition-colors"
+                  className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -167,10 +169,5 @@ function SignupForm() {
 }
 
 export function Signup() {
-  return (
-    <AuthProvider>
-      <SignupForm />
-      <Toaster position="top-right" theme="dark" />
-    </AuthProvider>
-  );
+  return <SignupForm />;
 }

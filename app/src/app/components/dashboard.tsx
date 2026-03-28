@@ -3,7 +3,7 @@ import { TrendingDown, TrendingUp, Wallet, CreditCard } from "lucide-react";
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Transaction } from "../types";
-import { fetchTransactions } from "../lib/transactions";
+import { fetchTransactions, getTransactionsErrorMessage } from "../lib/transactions";
 import { toast } from "sonner";
 
 export function Dashboard() {
@@ -21,7 +21,7 @@ export function Dashboard() {
     const { data, error } = await fetchTransactions();
 
     if (error) {
-      toast.error(`Erro ao carregar transações: ${error.message}`);
+      toast.error(`Erro ao carregar transações: ${getTransactionsErrorMessage(error)}`);
       setLoading(false);
       return;
     }
