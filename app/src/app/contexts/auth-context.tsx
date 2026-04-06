@@ -26,6 +26,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getPasswordResetRedirectUrl = () => {
+  const fallbackUrl = `${window.location.origin}/#/reset-password`;
+  const appUrl = import.meta.env.PROD ? import.meta.env.VITE_APP_URL_PROD : import.meta.env.VITE_APP_URL_DEV;
+
+  if (!appUrl) {
+    return fallbackUrl;
+  }
+
+  try {
+    const normalizedAppUrl = new URL(appUrl).toString().replace(/\/+$/, "");
+    return `${normalizedAppUrl}/#/reset-password`;
+  } catch {
+    console.warn("VITE_APP_URL inválida. Usando fallback seguro para redirectTo.");
+    return fallbackUrl;
+  }
+};
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -126,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const requestPasswordReset = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#/reset-password`,
+        redirectTo: getPasswordResetRedirectUrl(),
       });
 
       if (error) {
