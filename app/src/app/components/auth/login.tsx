@@ -172,6 +172,13 @@ function LoginForm() {
               </div>
             </div>
 
+            <Link
+              to="/forgot-password"
+              className="block text-sm text-violet-500 hover:text-violet-400 transition-colors"
+            >
+              Esqueceu a senha?
+            </Link>
+
             <motion.button
               type="submit"
               disabled={loading}
