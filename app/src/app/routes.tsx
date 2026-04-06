@@ -6,6 +6,7 @@ import { AddTransaction } from "./components/add-transaction";
 import { Login } from "./components/auth/login";
 import { Signup } from "./components/auth/signup";
 import { MFASetup } from "./components/auth/mfa-setup";
+import { ResetPassword } from "./components/auth/reset-password";
 import { ProtectedRoute } from "./components/protected-route";
 
 export const router = createHashRouter([
@@ -16,6 +17,10 @@ export const router = createHashRouter([
   {
     path: "/signup",
     Component: Signup,
+  },
+  {
+    path: "/reset-password",
+    Component: ResetPassword,
   },
   {
     path: "/",
