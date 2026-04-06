@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { motion } from "motion/react";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -7,12 +7,46 @@ import { supabase } from "../../lib/supabase-client";
 
 function ResetPasswordForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [tokenReady, setTokenReady] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const tokenHash = searchParams.get("token_hash");
+    const type = searchParams.get("type");
+
+    if (!tokenHash || type !== "recovery") {
+      setTokenError("Link de recuperação inválido ou expirado");
+      return;
+    }
+
+    const verifyRecoveryToken = async () => {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "recovery",
+      });
+
+      if (error) {
+        setTokenError(error.message || "Não foi possível validar o link de recuperação");
+        return;
+      }
+
+      setTokenReady(true);
+    };
+
+    verifyRecoveryToken();
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!tokenReady || tokenError) {
+      toast.error(tokenError || "Link de recuperação inválido ou expirado");
+      return;
+    }
 
     if (newPassword.length < 6) {
       toast.error("A nova senha deve ter pelo menos 6 caracteres");
@@ -61,6 +95,12 @@ function ResetPasswordForm() {
             </p>
           </div>
 
+          {!tokenReady ? (
+            <div className="rounded-lg border border-border bg-accent p-4 text-sm text-muted-foreground">
+              {tokenError || "Validando link de recuperação..."}
+            </div>
+          ) : null}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="newPassword" className="block mb-2 text-sm text-white">
@@ -100,7 +140,7 @@ function ResetPasswordForm() {
 
             <motion.button
               type="submit"
-              disabled={loading}
+              disabled={loading || !tokenReady}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:from-violet-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
