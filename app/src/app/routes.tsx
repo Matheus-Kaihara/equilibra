@@ -20,6 +20,10 @@ export const router = createHashRouter([
     Component: Signup,
   },
   {
+  path: "/forgot-password",
+  Component: ForgotPassword,
+},
+  {
     path: "/reset-password",
     Component: ResetPassword,
   },
