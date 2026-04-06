@@ -15,6 +15,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresMFA?: boolean }>;
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   enrollMFA: () => Promise<{ success: boolean; qrCode?: string; secret?: string; error?: string }>;
@@ -118,6 +120,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error("Erro no signup:", error);
       return { success: false, error: error.message || "Erro ao criar conta" };
+    }
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/#/reset-password`,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Erro ao solicitar redefinição de senha:", error);
+      return { success: false, error: error.message || "Erro ao solicitar redefinição de senha" };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Erro ao atualizar senha:", error);
+      return { success: false, error: error.message || "Erro ao atualizar senha" };
     }
   };
 
@@ -243,6 +279,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     signIn,
     signUp,
+    requestPasswordReset,
+    updatePassword,
     signOut,
     getAccessToken,
     enrollMFA,
