@@ -1,18 +1,69 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Lock } from "lucide-react";
+import { AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase-client";
 
 function ResetPasswordForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [validatingLink, setValidatingLink] = useState(true);
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  const tokenHash = useMemo(() => {
+    const queryParams = new URLSearchParams(location.search);
+    return queryParams.get("token_hash");
+  }, [location.search]);
+
+  useEffect(() => {
+    const validateRecoveryLink = async () => {
+      setValidatingLink(true);
+      setLinkError(null);
+
+      try {
+        if (tokenHash) {
+          const { error } = await supabase.auth.verifyOtp({
+            type: "recovery",
+            token_hash: tokenHash,
+          });
+
+          if (error) {
+            setLinkError("Este link de recuperação é inválido ou já expirou.");
+            toast.error("Link de recuperação inválido ou expirado");
+            return;
+          }
+
+          return;
+        }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          setLinkError("Abra o link recebido por e-mail para redefinir sua senha.");
+        }
+      } catch (error) {
+        setLinkError("Não foi possível validar o link de recuperação.");
+      } finally {
+        setValidatingLink(false);
+      }
+    };
+
+    void validateRecoveryLink();
+  }, [tokenHash]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (linkError) {
+      toast.error(linkError);
+      return;
+    }
 
     if (newPassword.length < 6) {
       toast.error("A nova senha deve ter pelo menos 6 caracteres");
@@ -61,6 +112,13 @@ function ResetPasswordForm() {
             </p>
           </div>
 
+          {linkError && (
+            <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{linkError}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="newPassword" className="block mb-2 text-sm text-white">
@@ -76,6 +134,7 @@ function ResetPasswordForm() {
                   placeholder="••••••••"
                   className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
+                  disabled={loading || validatingLink || Boolean(linkError)}
                 />
               </div>
             </div>
@@ -94,18 +153,19 @@ function ResetPasswordForm() {
                   placeholder="••••••••"
                   className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
+                  disabled={loading || validatingLink || Boolean(linkError)}
                 />
               </div>
             </div>
 
             <motion.button
               type="submit"
-              disabled={loading}
+              disabled={loading || validatingLink || Boolean(linkError)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:from-violet-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Salvando..." : "Salvar nova senha"}
+              {validatingLink ? "Validando link..." : loading ? "Salvando..." : "Salvar nova senha"}
             </motion.button>
           </form>
         </div>
