@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { KeyRound, Mail } from "lucide-react";
@@ -6,12 +6,51 @@ import { toast } from "sonner";
 import { useAuth } from "../../contexts/auth-context";
 
 function ForgotPasswordForm() {
+  const RESEND_COOLDOWN_SECONDS = 60;
   const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setCooldown((previousCooldown) => {
+        if (previousCooldown <= 1) {
+          window.clearInterval(interval);
+          return 0;
+        }
+
+        return previousCooldown - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [cooldown]);
+
+  const startCooldown = () => setCooldown(RESEND_COOLDOWN_SECONDS);
+
+  const isRateLimitError = (errorMessage?: string) => {
+    if (!errorMessage) {
+      return false;
+    }
+
+    const normalizedError = errorMessage.toLowerCase();
+    return normalizedError.includes("rate limit")
+      || normalizedError.includes("too many requests")
+      || normalizedError.includes("muitas tentativas")
+      || normalizedError.includes("limite");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || cooldown > 0) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -19,11 +58,21 @@ function ForgotPasswordForm() {
 
       if (result.success) {
         toast.success("Se o e-mail existir, enviaremos um link de recuperação. Verifique sua caixa de entrada.");
+        startCooldown();
       } else {
         toast.error(result.error || "Erro ao solicitar link de recuperação");
+        if (isRateLimitError(result.error)) {
+          startCooldown();
+        }
       }
     } catch (error) {
       toast.error("Erro ao solicitar link de recuperação");
+      if (
+        error instanceof Error
+        && isRateLimitError(error.message)
+      ) {
+        startCooldown();
+      }
     } finally {
       setLoading(false);
     }
@@ -68,12 +117,12 @@ function ForgotPasswordForm() {
 
             <motion.button
               type="submit"
-              disabled={loading}
+              disabled={loading || cooldown > 0}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:from-violet-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Enviando..." : "Enviar link"}
+              {loading ? "Enviando..." : cooldown > 0 ? `Reenviar em ${cooldown}s` : "Enviar link"}
             </motion.button>
           </form>
 
