@@ -52,10 +52,13 @@ function ForgotPasswordForm() {
 
     const normalizedError = errorMessage.toLowerCase();
     return normalizedError.includes("rate limit")
+      || normalizedError.includes("429")
       || normalizedError.includes("too many requests")
       || normalizedError.includes("muitas tentativas")
       || normalizedError.includes("limite");
   };
+
+  const RATE_LIMIT_TOAST_MESSAGE = "Muitas tentativas no servidor. Aguarde alguns minutos e tente novamente.";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,13 +76,11 @@ function ForgotPasswordForm() {
         setConsecutiveRateLimitErrors(0);
         startDefaultCooldown();
       } else {
-        toast.error(result.error || "Erro ao solicitar link de recuperação");
         if (isRateLimitError(result.error)) {
           startRateLimitCooldown();
         }
       }
     } catch (error) {
-      toast.error("Erro ao solicitar link de recuperação");
       if (
         error instanceof Error
         && isRateLimitError(error.message)
