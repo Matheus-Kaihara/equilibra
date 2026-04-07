@@ -6,11 +6,12 @@ import { toast } from "sonner";
 import { useAuth } from "../../contexts/auth-context";
 
 function ForgotPasswordForm() {
-  const RESEND_COOLDOWN_SECONDS = 60;
+  const RATE_LIMIT_COOLDOWN_STEPS = [60, 120, 300];
   const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [consecutiveRateLimitErrors, setConsecutiveRateLimitErrors] = useState(0);
 
   useEffect(() => {
     if (cooldown <= 0) {
@@ -31,7 +32,18 @@ function ForgotPasswordForm() {
     return () => window.clearInterval(interval);
   }, [cooldown]);
 
-  const startCooldown = () => setCooldown(RESEND_COOLDOWN_SECONDS);
+  const startDefaultCooldown = () => {
+    setCooldown(RATE_LIMIT_COOLDOWN_STEPS[0]);
+  };
+
+  const startRateLimitCooldown = () => {
+    const nextCooldownIndex = Math.min(
+      consecutiveRateLimitErrors,
+      RATE_LIMIT_COOLDOWN_STEPS.length - 1,
+    );
+    setCooldown(RATE_LIMIT_COOLDOWN_STEPS[nextCooldownIndex]);
+    setConsecutiveRateLimitErrors((previousCount) => previousCount + 1);
+  };
 
   const isRateLimitError = (errorMessage?: string) => {
     if (!errorMessage) {
@@ -61,13 +73,11 @@ function ForgotPasswordForm() {
 
       if (result.success) {
         toast.success("Se o e-mail existir, enviaremos um link de recuperação. Verifique sua caixa de entrada.");
-        startCooldown();
+        setConsecutiveRateLimitErrors(0);
+        startDefaultCooldown();
       } else {
         if (isRateLimitError(result.error)) {
-          toast.error(RATE_LIMIT_TOAST_MESSAGE);
-          startCooldown();
-        } else {
-          toast.error(result.error || "Erro ao solicitar link de recuperação");
+          startRateLimitCooldown();
         }
       }
     } catch (error) {
@@ -75,10 +85,7 @@ function ForgotPasswordForm() {
         error instanceof Error
         && isRateLimitError(error.message)
       ) {
-        toast.error(RATE_LIMIT_TOAST_MESSAGE);
-        startCooldown();
-      } else {
-        toast.error("Erro ao solicitar link de recuperação");
+        startRateLimitCooldown();
       }
     } finally {
       setLoading(false);
