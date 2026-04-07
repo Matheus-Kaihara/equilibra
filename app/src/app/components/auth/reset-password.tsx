@@ -10,6 +10,8 @@ function ResetPasswordForm() {
   const location = useLocation();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [tokenReady, setTokenReady] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [validatingLink, setValidatingLink] = useState(true);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -56,6 +58,32 @@ function ResetPasswordForm() {
 
     void validateRecoveryLink();
   }, [tokenHash]);
+
+  useEffect(() => {
+    const tokenHash = searchParams.get("token_hash");
+    const type = searchParams.get("type");
+
+    if (!tokenHash || type !== "recovery") {
+      setTokenError("Link de recuperação inválido ou expirado");
+      return;
+    }
+
+    const verifyRecoveryToken = async () => {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "recovery",
+      });
+
+      if (error) {
+        setTokenError(error.message || "Não foi possível validar o link de recuperação");
+        return;
+      }
+
+      setTokenReady(true);
+    };
+
+    verifyRecoveryToken();
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
