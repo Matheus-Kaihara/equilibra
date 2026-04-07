@@ -60,3 +60,13 @@ Use o botão com este padrão:
 ```
 
 Esse formato evita dependência de URL sem hash e funciona com `createHashRouter`.
+
+## Revisão no painel do Supabase (produção)
+
+Antes de habilitar o envio em produção, revise no dashboard:
+
+1. **Políticas de envio de Auth** em `Auth > Settings` (rate limits, expiração de links e domínio permitido de redirecionamento).
+2. **Provedor de e-mail SMTP próprio** em `Auth > Settings > SMTP Settings` para reduzir bloqueios de provedores, melhorar entregabilidade e ter controle de limites.
+3. **Domínio de envio autenticado** (SPF, DKIM e, se disponível, DMARC) para aumentar reputação do remetente.
+
+> Recomendação: use SMTP próprio em produção e mantenha o provedor padrão apenas para desenvolvimento/testes rápidos.
