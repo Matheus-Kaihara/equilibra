@@ -1,18 +1,63 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Lock } from "lucide-react";
+import { AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase-client";
 
 function ResetPasswordForm() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [tokenReady, setTokenReady] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [validatingLink, setValidatingLink] = useState(true);
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  const tokenHash = useMemo(() => {
+    const queryParams = new URLSearchParams(location.search);
+    return queryParams.get("token_hash");
+  }, [location.search]);
+
+  useEffect(() => {
+    const validateRecoveryLink = async () => {
+      setValidatingLink(true);
+      setLinkError(null);
+
+      try {
+        if (tokenHash) {
+          const { error } = await supabase.auth.verifyOtp({
+            type: "recovery",
+            token_hash: tokenHash,
+          });
+
+          if (error) {
+            setLinkError("Este link de recuperação é inválido ou já expirou.");
+            toast.error("Link de recuperação inválido ou expirado");
+            return;
+          }
+
+          return;
+        }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          setLinkError("Abra o link recebido por e-mail para redefinir sua senha.");
+        }
+      } catch (error) {
+        setLinkError("Não foi possível validar o link de recuperação.");
+      } finally {
+        setValidatingLink(false);
+      }
+    };
+
+    void validateRecoveryLink();
+  }, [tokenHash]);
 
   useEffect(() => {
     const tokenHash = searchParams.get("token_hash");
@@ -43,8 +88,8 @@ function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!tokenReady || tokenError) {
-      toast.error(tokenError || "Link de recuperação inválido ou expirado");
+    if (linkError) {
+      toast.error(linkError);
       return;
     }
 
@@ -95,11 +140,12 @@ function ResetPasswordForm() {
             </p>
           </div>
 
-          {!tokenReady ? (
-            <div className="rounded-lg border border-border bg-accent p-4 text-sm text-muted-foreground">
-              {tokenError || "Validando link de recuperação..."}
+          {linkError && (
+            <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{linkError}</span>
             </div>
-          ) : null}
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -116,6 +162,7 @@ function ResetPasswordForm() {
                   placeholder="••••••••"
                   className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
+                  disabled={loading || validatingLink || Boolean(linkError)}
                 />
               </div>
             </div>
@@ -134,18 +181,19 @@ function ResetPasswordForm() {
                   placeholder="••••••••"
                   className="w-full pl-11 pr-4 py-3 bg-accent text-white rounded-lg border border-border placeholder:text-zinc-300 focus:border-violet-500 focus:outline-none transition-colors"
                   required
+                  disabled={loading || validatingLink || Boolean(linkError)}
                 />
               </div>
             </div>
 
             <motion.button
               type="submit"
-              disabled={loading || !tokenReady}
+              disabled={loading || validatingLink || Boolean(linkError)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg font-semibold hover:from-violet-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Salvando..." : "Salvar nova senha"}
+              {validatingLink ? "Validando link..." : loading ? "Salvando..." : "Salvar nova senha"}
             </motion.button>
           </form>
         </div>
