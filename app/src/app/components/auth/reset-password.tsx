@@ -5,6 +5,17 @@ import { AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase-client";
 
+const RATE_LIMIT_RECOVERY_MESSAGE = "Muitas tentativas. Aguarde 60 segundos e tente novamente.";
+const GENERIC_RECOVERY_ERROR_MESSAGE = "Não foi possível validar o link de recuperação.";
+
+function getRecoveryErrorMessage(errorMessage?: string) {
+  if ((errorMessage ?? "").toLowerCase().includes("rate limit exceeded")) {
+    return RATE_LIMIT_RECOVERY_MESSAGE;
+  }
+
+  return GENERIC_RECOVERY_ERROR_MESSAGE;
+}
+
 function ResetPasswordForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,8 +45,9 @@ function ResetPasswordForm() {
           });
 
           if (error) {
-            setLinkError("Este link de recuperação é inválido ou já expirou.");
-            toast.error("Link de recuperação inválido ou expirado");
+            const recoveryErrorMessage = getRecoveryErrorMessage(error.message);
+            setLinkError(recoveryErrorMessage);
+            toast.error(recoveryErrorMessage);
             return;
           }
 
@@ -50,7 +62,7 @@ function ResetPasswordForm() {
           setLinkError("Abra o link recebido por e-mail para redefinir sua senha.");
         }
       } catch (error) {
-        setLinkError("Não foi possível validar o link de recuperação.");
+        setLinkError(GENERIC_RECOVERY_ERROR_MESSAGE);
       } finally {
         setValidatingLink(false);
       }
@@ -75,7 +87,7 @@ function ResetPasswordForm() {
       });
 
       if (error) {
-        setTokenError(error.message || "Não foi possível validar o link de recuperação");
+        setTokenError(getRecoveryErrorMessage(error.message));
         return;
       }
 
